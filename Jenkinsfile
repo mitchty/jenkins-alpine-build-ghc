@@ -89,7 +89,7 @@ pipeline {
     }
   }
   options {
-    buildDiscarder(logRotator(numToKeepStr: '31'))
+    buildDiscarder(logRotator(numToKeepStr: '31', artifactNumToKeepStr: '3'))
     timestamps()
   }
 }
