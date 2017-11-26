@@ -8,7 +8,42 @@ if (['8.0.2'].contains(scm.branches[0].name)) {
   default_arm = false
 }
 
+def build_ghc(String arch) {
+  if (arch == 'armhf') {
+    duration = 2
+    units = 'DAYS'
+  } else {
+    duration = 2
+    units = 'HOURS'
+  }
+  ghc_apk["${arch} ghc'] = { script { timeout(time: duration, unit: units) {
+    node('alpine-${arch}') {
+      lock(arch) {
+        deleteDir()
+          if (apk_update == "true") {
+            sh "/sbin/apk update && /sbin/apk upgrade"
+          }
+          git branch: env.BRANCH_NAME, credentialsId: 'mitchty_github', url: aports_url
+          sh "chown -R build:build ${env.WORKSPACE}"
+          sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
+          sh "su -l build -c 'ulimit -c unlimited; cd ${env.WORKSPACE}/community/ghc && abuild -r'"
+          dir("${env.WORKSPACE}/community/ghc") {
+            archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
+            sh "mv APKBUILD APKBUILD.${arch}"
+            archiveArtifacts artifacts: "APKBUILD.${arch}", fingerprint: true
+          }
+        }
+      }
+    }}}
+}
+
 pipeline {
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '31', artifactNumToKeepStr: '3'))
+    timestamps()
+    skipDefaultCheckout()
+    skipStagesAfterUnstable()
+  }
   agent { label "alpine" }
   parameters {
     choice(choices: 'all\nghc\ncabal\nstack', name: 'action'
@@ -31,51 +66,15 @@ pipeline {
           if (env.BRANCH_NAME == 'master') { exit 0 }
           if (armhf != "true" && x86_64 != "true") { error("Have to pick at least one of the arches to build") }
           if (armhf == "true") {
-            ghc_apk['armhf ghc'] = { script { timeout(time: 2, unit: 'DAYS') {
-              node('alpine-armhf') {
-                lock("armhf") {
-                  deleteDir()
-  		if (apk_update == "true") {
-  	          sh "/sbin/apk update && /sbin/apk upgrade"
-  		}
-                  git branch: env.BRANCH_NAME, credentialsId: 'mitchty_github', url: aports_url
-                  sh "chown -R build:build ${env.WORKSPACE}"
-                  sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
-                  sh "su -l build -c 'ulimit -c unlimited; cd ${env.WORKSPACE}/community/ghc && abuild -r'"
-                  dir("${env.WORKSPACE}/community/ghc") {
-                    archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
-                    sh "mv APKBUILD APKBUILD.armhf"
-                    archiveArtifacts artifacts: "APKBUILD.armhf", fingerprint: true
-                  }
-                }
-              }
-            }}}
+            build_ghc('armhf')
           }
           if (x86_64 == "true") {
-            ghc_apk['x86_64 ghc'] = { script { timeout(time: 2, unit: 'HOURS') {
-              node('alpine-x86_64') {
-                lock("x86_64") {
-                  deleteDir()
-  		if (apk_update == "true") {
-  	          sh "/sbin/apk update && /sbin/apk upgrade"
-  		}
-                  git branch: env.BRANCH_NAME, credentialsId: 'mitchty_github', url: aports_url
-                  sh "chown -R build:build ${env.WORKSPACE}"
-                  sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
-                  sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild -r'"
-                  dir("${env.WORKSPACE}/community/ghc") {
-                    archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
-                    sh "mv APKBUILD APKBUILD.x86_64"
-                    archiveArtifacts artifacts: "APKBUILD.x86_64", fingerprint: true
-                  }
-                }
-              }
-            }}}
+            build_ghc('x86_64')
           }
         }
       }
     }
-    stage("ghc apk") {
+    stage("build ghc") {
       steps {
         script {
           parallel(ghc_apk)
@@ -87,9 +86,5 @@ pipeline {
     success {
       deleteDir()
     }
-  }
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '31', artifactNumToKeepStr: '3'))
-    timestamps()
   }
 }
