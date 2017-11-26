@@ -1,6 +1,13 @@
 #!/usr/bin/env groovy
 ghc_apk = [:]
 
+// Until I debug the arm issue, don't build armhf by default
+if (['8.0.2'].contains(scm.branches[0].name)) {
+  default_arm = true
+} else {
+  default_arm = false
+}
+
 pipeline {
   agent { label "alpine" }
   parameters {
@@ -14,7 +21,7 @@ pipeline {
                  , description: 'Update apk packages/db prior to building stuff?')
     booleanParam(defaultValue: true, name: 'x86_64'
                  , description: 'Build x86_64?')
-    booleanParam(defaultValue: true, name: 'armhf'
+    booleanParam(defaultValue: default_arm, name: 'armhf'
                  , description: 'Build armhf')
   }
   stages {
