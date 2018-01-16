@@ -64,9 +64,12 @@ pipeline {
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild -r'"
                   dir("${env.WORKSPACE}/community/ghc") {
-                    archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
                     sh "mv APKBUILD APKBUILD.x86_64"
                     archiveArtifacts artifacts: "APKBUILD.x86_64", fingerprint: true
+                  }
+                  sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild bindist'"
+                  dir("${env.WORKSPACE}/community/ghc") {
+                    archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
                   }
                 }
               }
