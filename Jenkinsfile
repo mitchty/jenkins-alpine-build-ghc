@@ -28,7 +28,7 @@ pipeline {
     stage("pre-setup") {
       steps {
         script {
-          if (env.BRANCH_NAME == 'master') { exit 0 }
+          if (env.BRANCH_NAME == 'master') { exit 0 } else { def bn = "jenkins-${env.BRANCH_NAME}" }
           if (armhf != "true" && x86_64 != "true") { error("Have to pick at least one of the arches to build") }
           if (armhf == "true") {
             ghc_apk['armhf ghc'] = { script { timeout(time: 2, unit: 'DAYS') {
@@ -38,7 +38,7 @@ pipeline {
   		if (apk_update == "true") {
   	          sh "/sbin/apk update && /sbin/apk upgrade"
   		}
-                  git branch: env.BRANCH_NAME, credentialsId: 'mitchty_github', url: aports_url
+                  git branch: bn, credentialsId: 'mitchty_github', url: aports_url
                   sh "chown -R build:build ${env.WORKSPACE}"
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
                   sh "su -l build -c 'ulimit -c unlimited; cd ${env.WORKSPACE}/community/ghc && abuild -r'"
@@ -59,7 +59,7 @@ pipeline {
   		if (apk_update == "true") {
   	          sh "/sbin/apk update && /sbin/apk upgrade"
   		}
-                  git branch: env.BRANCH_NAME, credentialsId: 'mitchty_github', url: aports_url
+                  git branch: bn, credentialsId: 'mitchty_github', url: aports_url
                   sh "chown -R build:build ${env.WORKSPACE}"
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild -r'"
