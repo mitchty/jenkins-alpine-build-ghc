@@ -45,7 +45,7 @@ pipeline {
                   sh "su -l build -c 'ulimit -c unlimited; cd ${env.WORKSPACE}/community/ghc && abuild -r'"
                   dir("${env.WORKSPACE}/community/ghc") {
                     archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
-                    sh "mv APKBUILD APKBUILD.armhf"
+                    sh "cp APKBUILD APKBUILD.armhf"
                     archiveArtifacts artifacts: "APKBUILD.armhf", fingerprint: true
                   }
                 }
@@ -65,7 +65,7 @@ pipeline {
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild checksum'"
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild -r'"
                   dir("${env.WORKSPACE}/community/ghc") {
-                    sh "mv APKBUILD APKBUILD.x86_64"
+                    sh "cp APKBUILD APKBUILD.x86_64"
                     archiveArtifacts artifacts: "APKBUILD.x86_64", fingerprint: true
                   }
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild bindist'"
