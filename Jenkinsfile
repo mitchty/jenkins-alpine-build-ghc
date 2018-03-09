@@ -28,7 +28,8 @@ pipeline {
     stage("pre-setup") {
       steps {
         script {
-          if (env.BRANCH_NAME == 'master') { exit 0 } else { def bn = "jenkins-${env.BRANCH_NAME}" }
+          def bn = "jenkins-${env.BRANCH_NAME}"
+          if (env.BRANCH_NAME == 'master') { exit 0 }
           if (armhf != "true" && x86_64 != "true") { error("Have to pick at least one of the arches to build") }
           if (armhf == "true") {
             ghc_apk['armhf ghc'] = { script { timeout(time: 2, unit: 'DAYS') {
