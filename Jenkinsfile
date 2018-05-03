@@ -2,11 +2,11 @@
 ghc_apk = [:]
 
 // Until I debug the arm issue, don't build armhf by default
-if (['8.0.2'].contains(scm.branches[0].name)) {
-  default_arm = true
-} else {
+//if (['8.0.2'].contains(scm.branches[0].name)) {
+//  default_arm = true
+//} else {
   default_arm = false
-}
+//}
 
 pipeline {
   agent { label "alpine" }
