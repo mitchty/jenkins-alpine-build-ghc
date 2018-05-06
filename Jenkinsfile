@@ -23,6 +23,8 @@ pipeline {
                  , description: 'Build x86_64?')
     booleanParam(defaultValue: default_arm, name: 'armhf'
                  , description: 'Build armhf')
+    booleanParam(defaultValue: false, name: 'bindist'
+                 , description: 'Build bindist?')
   }
   stages {
     stage("pre-setup") {
@@ -67,10 +69,12 @@ pipeline {
                     sh "cp APKBUILD APKBUILD.x86_64"
                     archiveArtifacts artifacts: "APKBUILD.x86_64", fingerprint: true
                   }
+		if (bindist == "true") {
                   sh "su -l build -c 'cd ${env.WORKSPACE}/community/ghc && abuild bindist'"
                   dir("${env.WORKSPACE}/community/ghc") {
                     archiveArtifacts artifacts: "ghc*.tar.xz", fingerprint: true
                   }
+		}
                 }
               }
             }}}
